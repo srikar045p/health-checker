@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Health Monitor Demo</title>
+</head>
+<body>
+    <div style="max-width: 1000px; margin: 0 auto; padding: 20px;">
+        <h1>My Application Dashboard</h1>
+        <p>This is a standard web application. Below is the embedded system health monitor.</p>
+
+        <!-- The Container -->
+        <div id="health-monitor-container"></div>
+    </div>
+
+    <!-- Import the Client Library -->
+    <script src="/client/system-health-client.js"></script>
+
+    <!-- Initialize -->
+    <script>
+        // Wait for script to load
+        window.addEventListener('load', () => {
+            SystemHealthClient.initMonitor('health-monitor-container', {
+                apiEndpoint: '/_system-health',
+                refreshInterval: 2000
+            });
+        });
+    </script>
+</body>
+</html>
