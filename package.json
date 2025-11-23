@@ -4,11 +4,13 @@
   "description": "A package which can be used to display the system health.",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "demo": "node demo/server.js"
   },
   "author": "srikar p",
   "license": "ISC",
-  "dependencies": {
+  "devDependencies": {
     "express": "^4.21.2"
-  }
+  },
+  "dependencies": {}
 }
