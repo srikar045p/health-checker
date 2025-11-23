@@ -1,5 +1,5 @@
 {
-  "name": "system-health-monitor",
+  "name": "@srikarp/system-health-monitor",
   "version": "1.0.0",
   "description": "A package which can be used to display the system health.",
   "main": "index.js",
