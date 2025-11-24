@@ -4,6 +4,7 @@
  */
 
 const fs = require('fs').promises;
+const fsSync = require('fs');
 const path = require('path');
 const os = require('os');
 const { performance } = require('perf_hooks');
@@ -38,9 +39,6 @@ class SystemHealthMonitor {
                 console.warn('⚠️ Unsupported platform for advanced metrics, falling back to basic Node.js metrics.');
                 this.platformMonitor = linuxMonitor; // Fallback to linux-like generic commands or just fail gracefully
         }
-
-        // We do NOT auto-start monitoring in the constructor anymore to give user control.
-        // User must call start() or configure it.
     }
 
     /**
@@ -267,6 +265,51 @@ class SystemHealthMonitor {
 
     getHealthHistory(limit = 50) {
         return this.healthHistory.slice(-limit);
+    }
+
+    /**
+     * Generate a complete HTML page with embedded client script
+     * @param {string} apiEndpoint - The endpoint where metrics are served
+     * @returns {string} HTML content
+     */
+    getSystemHealthUI(apiEndpoint = '/_system-health') {
+        // Read client script synchronously since this is usually called once or rarely
+        let clientScript = '';
+        try {
+            clientScript = fsSync.readFileSync(path.join(__dirname, 'client/system-health-client.js'), 'utf8');
+        } catch (e) {
+            console.error('Failed to read client script', e);
+            clientScript = '// Error loading client script';
+        }
+
+        return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Health Dashboard</title>
+</head>
+<body style="margin: 0; background: #f4f6f8; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+    <div style="max-width: 1200px; margin: 0 auto; padding: 20px;">
+        <div id="health-dashboard-container"></div>
+    </div>
+    <script>
+        ${clientScript}
+    </script>
+    <script>
+        window.addEventListener('load', function() {
+            if (typeof SystemHealthClient !== 'undefined') {
+                SystemHealthClient.initMonitor('health-dashboard-container', {
+                    apiEndpoint: '${apiEndpoint}'
+                });
+            } else {
+                document.body.innerHTML = '<h1>Error: System Health Client failed to load.</h1>';
+            }
+        });
+    </script>
+</body>
+</html>`;
     }
 }
 
