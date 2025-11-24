@@ -14,19 +14,21 @@ A lightweight, framework-agnostic Node.js package to monitor server system healt
 
 ## 📦 Installation
 
+To use this package, install it in your Node.js backend project.
+
 ```bash
 npm install @srikarp/system-health-monitor
 ```
 
+*Note: If you have a separate Frontend project (e.g., a React App created with CRA/Vite that runs on a different server), you should also install it there to get access to the client library.*
+
 ## 🛠️ Integration Guide
 
-This package consists of two parts:
-1.  **Backend:** Collects system metrics.
-2.  **Frontend:** Visualizes the metrics.
+This package consists of two parts: a **Backend** (to collect data) and a **Frontend** (to visualize it).
 
-### 1. Backend Setup (Node.js)
+### Part 1: Backend Setup (Node.js)
 
-You need to expose an endpoint that your frontend will poll. Here is an example using **Express**:
+You need to expose an endpoint in your server that the frontend will check.
 
 ```javascript
 const express = require('express');
@@ -34,10 +36,10 @@ const monitor = require('@srikarp/system-health-monitor');
 
 const app = express();
 
-// Start the monitor (begins data collection)
+// 1. Start monitoring (begins data collection)
 monitor.start();
 
-// Expose the metrics endpoint
+// 2. Create the Data Endpoint (Returns JSON)
 app.get('/_system-health', (req, res) => {
     res.json({
         data: monitor.getCurrentHealth().data,
@@ -45,75 +47,74 @@ app.get('/_system-health', (req, res) => {
     });
 });
 
+// 3. (Optional) Create an Instant Dashboard Page
+// This lets you visit http://localhost:3000/dashboard to see the UI immediately.
+app.get('/dashboard', (req, res) => {
+    res.send(monitor.getSystemHealthUI('/_system-health'));
+});
+
 app.listen(3000, () => console.log('Server running on port 3000'));
 ```
 
-### 2. Frontend Setup
+### Part 2: Frontend Integration
 
-In your HTML or Frontend Framework, create a container element and initialize the monitor.
+If you didn't use the "Instant Dashboard" above and want to integrate the graphs into your existing application, follow these steps.
 
-#### Plain HTML / EJS
+#### Option A: Using ES Modules (React, Angular, Vue, Vite)
+
+If you are using a bundler, import the client directly.
+
+```javascript
+// In your React/Vue component file
+import '@srikarp/system-health-monitor/client/system-health-client';
+
+// ... inside your component ...
+useEffect(() => {
+    // 'SystemHealthClient' is now available globally
+    SystemHealthClient.initMonitor('my-dashboard-container', {
+        apiEndpoint: 'http://localhost:3000/_system-health' // Your backend URL
+    });
+}, []);
+```
+
+#### Option B: Plain HTML / Script Tag
+
+If you are not using a build tool, you need to serve the client script from your backend or copy it to your public folder.
 
 ```html
 <!-- 1. Create a Container -->
 <div id="health-dashboard"></div>
 
 <!-- 2. Import the Client Script -->
-<!-- You can serve this file from node_modules or copy it to your public assets -->
-<script src="/path/to/node_modules/@srikarp/system-health-monitor/client/system-health-client.js"></script>
+<!-- Ensure this path points to where you are serving the file -->
+<script src="/path/to/system-health-client.js"></script>
 
 <!-- 3. Initialize -->
 <script>
     window.addEventListener('load', () => {
         SystemHealthClient.initMonitor('health-dashboard', {
-            apiEndpoint: '/_system-health', // Must match your backend route
-            refreshInterval: 2000           // Update every 2 seconds
+            apiEndpoint: '/_system-health'
         });
     });
 </script>
 ```
 
-#### React Example
-
-```jsx
-import React, { useEffect } from 'react';
-// Note: You might need to copy the client JS to your public folder
-// or import it if your bundler supports it.
-import SystemHealthClient from '@srikarp/system-health-monitor/client/system-health-client';
-
-const Dashboard = () => {
-  useEffect(() => {
-    SystemHealthClient.initMonitor('my-dashboard', {
-        apiEndpoint: 'http://localhost:3000/_system-health'
-    });
-
-    // Cleanup on unmount
-    return () => SystemHealthClient.stop();
-  }, []);
-
-  return <div id="my-dashboard"></div>;
-};
-
-export default Dashboard;
-```
-
 ## ⚙️ Configuration
 
-### `monitor.start(intervalMs)`
+### Backend: `monitor.start(intervalMs)`
 *   `intervalMs` (number): How often the backend collects metrics in milliseconds. Default: `4000`.
 
-### `SystemHealthClient.initMonitor(containerId, options)`
+### Backend: `monitor.getSystemHealthUI(apiEndpoint)`
+*   Returns a complete HTML string representing the dashboard, pre-wired to the given endpoint. useful for server-side rendering.
+
+### Frontend: `SystemHealthClient.initMonitor(containerId, options)`
 *   `containerId` (string): The ID of the DOM element to render the dashboard into.
 *   `options` (object):
     *   `apiEndpoint` (string): The URL of your backend metrics endpoint. Default: `/_system-health`.
     *   `refreshInterval` (number): Polling frequency in ms. Default: `2000`.
-    *   `chartColors` (object): Custom hex colors for charts.
-        *   `cpu`: Default `#2ecc71` (Green)
-        *   `memory`: Default `#3498db` (Blue)
+    *   `chartColors` (object): Custom hex colors for charts (e.g., `{ cpu: '#ff0000' }`).
 
 ## 📊 Metrics Collected
-
-The package attempts to collect the following data using OS-specific commands:
 
 | Metric | Windows | Linux | macOS |
 | :--- | :--- | :--- | :--- |
@@ -121,10 +122,7 @@ The package attempts to collect the following data using OS-specific commands:
 | **Memory** | `wmic OS` | `free -m` | Node Fallback |
 | **Disk Usage** | `wmic logicaldisk` | `df -k` | `df -h` |
 | **Processes** | Node API | Node API | Node API |
-| **Network** | Node API | Node API | Node API |
 | **GPU Info** | `wmic path win32_videocontroller` | `lspci` | `system_profiler` |
-
-*Note: If a native command fails or is unavailable, the package falls back to standard Node.js `os` module metrics to ensure stability.*
 
 ## 📄 License
 
