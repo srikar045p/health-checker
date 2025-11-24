@@ -18,6 +18,11 @@ app.get('/_system-health', async (req, res) => {
     res.json(data);
 });
 
+// 3. (Optional) Serve the Standalone Dashboard UI directly
+app.get('/dashboard', (req, res) => {
+    res.send(monitor.getSystemHealthUI('/_system-health'));
+});
+
 // Serve the client library (In a real app, user would bundle this or use a CDN)
 app.use('/client', express.static(path.join(__dirname, '../client')));
 
@@ -28,4 +33,6 @@ app.get('/', (req, res) => {
 
 app.listen(PORT, () => {
     console.log(`Demo running at http://localhost:${PORT}`);
+    console.log(`- Custom Integration: http://localhost:${PORT}/`);
+    console.log(`- Instant Dashboard:  http://localhost:${PORT}/dashboard`);
 });
