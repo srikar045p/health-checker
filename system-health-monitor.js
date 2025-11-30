@@ -23,6 +23,8 @@ class SystemHealthMonitor {
         this.monitoringInterval = null;
         this.alerts = [];
         this.prevElu = null; // Previous event loop utilization
+        this.lastNetworkStats = null;
+        this.lastNetworkTime = null;
         
         // Select platform monitor
         switch (process.platform) {
@@ -114,14 +116,16 @@ class SystemHealthMonitor {
     async getDetailedHealthMetrics() {
         const uptime = process.uptime();
         const systemUptime = os.uptime();
+        const now = Date.now();
         
         // 1. Get OS-specific metrics via CLI tools (Requirements)
-        const [diskUsage, osCpu, osMem, osGpu, osInfo] = await Promise.all([
+        const [diskUsage, osCpu, osMem, osGpu, osInfo, rawNetworkStats] = await Promise.all([
             this.platformMonitor.getDiskUsage(),
             this.platformMonitor.getCPUInfo(),
             this.platformMonitor.getMemoryInfo(),
             this.platformMonitor.getGPUInfo(),
-            this.platformMonitor.getOSInfo()
+            this.platformMonitor.getOSInfo(),
+            this.platformMonitor.getNetworkStats()
         ]);
 
         // 2. Fallback / Complementary Node.js Metrics
@@ -133,6 +137,18 @@ class SystemHealthMonitor {
         if (cpuPercent === null) {
             cpuPercent = await this.calculateCPUPercentAccurate();
         }
+
+        // Calculate Network Speed
+        let networkSpeed = { rx_sec: 0, tx_sec: 0 };
+        if (rawNetworkStats && this.lastNetworkStats && this.lastNetworkTime) {
+            const timeDiff = (now - this.lastNetworkTime) / 1000; // seconds
+            if (timeDiff > 0) {
+                networkSpeed.rx_sec = Math.round((rawNetworkStats.rx - this.lastNetworkStats.rx) / timeDiff);
+                networkSpeed.tx_sec = Math.round((rawNetworkStats.tx - this.lastNetworkStats.tx) / timeDiff);
+            }
+        }
+        this.lastNetworkStats = rawNetworkStats;
+        this.lastNetworkTime = now;
 
         return {
             // Process metrics (Node.js specific)
@@ -179,8 +195,11 @@ class SystemHealthMonitor {
             // Disk usage (From CLI)
             disk: diskUsage,
 
-            // Network info (Node.js API is excellent for this)
-            network: this.formatNetworkInterfaces(os.networkInterfaces()),
+            // Network info
+            network: {
+                interfaces: this.formatNetworkInterfaces(os.networkInterfaces()),
+                speed: networkSpeed // { rx_sec, tx_sec } in Bytes
+            }
         };
     }
 
@@ -291,7 +310,7 @@ class SystemHealthMonitor {
     <title>System Health Dashboard</title>
 </head>
 <body style="margin: 0; background: #f4f6f8; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
-    <div style="max-width: 1200px; margin: 0 auto; padding: 20px;">
+    <div style="max-width: 1400px; margin: 0 auto; padding: 20px;">
         <div id="health-dashboard-container"></div>
     </div>
     <script>
