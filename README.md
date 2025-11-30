@@ -2,7 +2,7 @@
 
 A lightweight, framework-agnostic Node.js package to monitor server system health (CPU, Memory, Disk, Network) and display it in your frontend application.
 
-![System Health Dashboard](https://github.com/srikar045p/health-checker/blob/main/assets/dashboard-preview.png)
+![System Health Dashboard](https://github.com/srikar045p/health-checker/blob/main/assets/dashboard-preview.jpg)
 
 ## 🚀 Features
 
