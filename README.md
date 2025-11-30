@@ -2,15 +2,16 @@
 
 A lightweight, framework-agnostic Node.js package to monitor server system health (CPU, Memory, Disk, Network) and display it in your frontend application.
 
-![System Health Dashboard](assets/dashboard-preview.png)
+![System Health Dashboard](https://github.com/srikar045p/health-checker/blob/main/assets/dashboard-preview.png)
 
 ## 🚀 Features
 
 *   **Cross-Platform:** Works on **Windows**, **Linux**, and **macOS**.
-*   **Deep Metrics:** Uses native OS commands (`wmic`, `top`, `df`) for accurate data.
+*   **Deep Metrics:** Uses native OS commands (`wmic`, `top`, `df`, `netstat`) for accurate data.
 *   **Framework Agnostic:** Frontend component is pure Vanilla JS — works with **React**, **Angular**, **Vue**, or plain HTML.
 *   **Zero Dependencies (Runtime):** Lightweight backend; Frontend dynamically loads Chart.js from CDN (if not present).
 *   **Real-time:** Live updates with configurable polling intervals.
+*   **Network Monitoring:** Real-time upload/download speeds.
 
 ## 📦 Installation
 
@@ -121,6 +122,7 @@ If you are not using a build tool, you need to serve the client script from your
 | **CPU Usage** | `wmic cpu get loadpercentage` | `top` / Node Fallback | Node Fallback |
 | **Memory** | `wmic OS` | `free -m` | Node Fallback |
 | **Disk Usage** | `wmic logicaldisk` | `df -k` | `df -h` |
+| **Network Traffic** | `netstat -e` | `/proc/net/dev` | (Fallback) |
 | **Processes** | Node API | Node API | Node API |
 | **GPU Info** | `wmic path win32_videocontroller` | `lspci` | `system_profiler` |
 
